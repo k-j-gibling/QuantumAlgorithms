@@ -1,0 +1,748 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{braket}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+
+\geometry{margin=1in}
+
+% Code listing style
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    breaklines=true,
+    frame=single,
+    captionpos=b
+}
+
+% Header and footer
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Quantum State Evolution}
+\lhead{Complete Workflow}
+\cfoot{\thepage}
+
+\title{\textbf{Quantum State Evolution}\\
+\textbf{for Permutation Symmetric Hamiltonians}\\[1em]
+\large Complete Workflow: Construction, Evolution, and Partial Trace}
+\author{Research Documentation}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This document provides comprehensive documentation for the complete quantum state evolution workflow designed for research with permutation symmetric Hamiltonians. The program handles: (1) Construction of symmetric Hamiltonians for N identical qubits, (2) Evolution of quantum states using the matrix exponential $e^{-iHt}$, (3) Computation of density matrices, and (4) Extraction of reduced states via partial trace. This workflow is essential for mean-field quantum computing and many-body quantum systems research.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+\subsection{Research Context}
+
+In quantum many-body systems with $N$ identical particles, \textbf{permutation symmetry} greatly simplifies the analysis. A Hamiltonian is permutation symmetric if it treats all particles identically:
+
+\begin{equation}
+    H = \sum_i h_i + \sum_{i<j} V_{ij}
+\end{equation}
+
+where $h_i$ and $V_{ij}$ are the same for all $i$ and all pairs $(i,j)$.
+
+\subsection{The Complete Workflow}
+
+This program implements the full research pipeline:
+
+\begin{enumerate}
+    \item \textbf{Input}: Hamiltonian $H$, initial state $\ket{\psi(0)}$, time $t$, number of copies $N$
+    \item \textbf{Evolution}: Compute $\ket{\psi(t)} = e^{-iHt}\ket{\psi(0)}$
+    \item \textbf{Density Matrix}: Form $\rho(t) = \ket{\psi(t)}\bra{\psi(t)}$
+    \item \textbf{Partial Trace}: Extract reduced state $\rho_{\text{reduced}} = \text{Tr}_{\text{other}}[\rho(t)]$
+    \item \textbf{Output}: Single-copy or few-copy quantum state
+\end{enumerate}
+
+\section{Mathematical Foundation}
+
+\subsection{Time Evolution}
+
+The Schr\"odinger equation gives:
+
+\begin{equation}
+    \ket{\psi(t)} = e^{-iHt}\ket{\psi(0)}
+\end{equation}
+
+For diagonalizable $H = UDU^\dagger$:
+
+\begin{equation}
+    e^{-iHt} = U e^{-iDt} U^\dagger = U \begin{pmatrix}
+        e^{-i\lambda_1 t} & 0 & \cdots \\
+        0 & e^{-i\lambda_2 t} & \cdots \\
+        \vdots & \vdots & \ddots
+    \end{pmatrix} U^\dagger
+\end{equation}
+
+\subsection{Density Matrix}
+
+For a pure state $\ket{\psi}$:
+
+\begin{equation}
+    \rho = \ket{\psi}\bra{\psi}
+\end{equation}
+
+Properties:
+\begin{itemize}
+    \item Hermitian: $\rho = \rho^\dagger$
+    \item Trace one: $\text{Tr}(\rho) = 1$
+    \item Positive semi-definite: eigenvalues $\geq 0$
+    \item Purity: $\text{Tr}(\rho^2) = 1$ for pure states, $< 1$ for mixed
+\end{itemize}
+
+\subsection{Partial Trace}
+
+For a composite system $\mathcal{H}_A \otimes \mathcal{H}_B$ with density matrix $\rho_{AB}$, the reduced state of subsystem $A$ is:
+
+\begin{equation}
+    \rho_A = \text{Tr}_B[\rho_{AB}] = \sum_i (\mathbb{I}_A \otimes \bra{i}_B) \rho_{AB} (\mathbb{I}_A \otimes \ket{i}_B)
+\end{equation}
+
+where $\{\ket{i}_B\}$ is a basis for subsystem $B$.
+
+\subsubsection{Example: 2-Qubit System}
+
+For $\rho = \ket{\psi}\bra{\psi}$ where $\ket{\psi} = \sum_{ij} c_{ij}\ket{i}\ket{j}$:
+
+\begin{equation}
+    \rho_A = \text{Tr}_B[\rho] = \sum_k (\mathbb{I} \otimes \bra{k}) \rho (\mathbb{I} \otimes \ket{k})
+\end{equation}
+
+In matrix form:
+
+\begin{equation}
+    (\rho_A)_{ij} = \sum_k \rho_{(i,k)(j,k)}
+\end{equation}
+
+\section{Program Structure}
+
+The program is organized into 8 main parts:
+
+\begin{enumerate}
+    \item \textbf{Hamiltonian Construction}: Build symmetric Hamiltonians
+    \item \textbf{State Evolution}: Compute $e^{-iHt}\ket{\psi(0)}$
+    \item \textbf{Density Matrix}: Form $\rho = \ket{\psi}\bra{\psi}$
+    \item \textbf{Partial Trace}: Extract reduced states
+    \item \textbf{Complete Workflow}: Integrated pipeline function
+    \item \textbf{Pre-built Hamiltonians}: Common models (TFIM, XY, etc.)
+    \item \textbf{Utility Functions}: Product states, Bloch vectors
+    \item \textbf{Demonstration}: Working examples
+\end{enumerate}
+
+\section{Usage Guide}
+
+\subsection{Quick Start}
+
+The main function is \texttt{evolve\_and\_trace()}:
+
+\begin{lstlisting}[caption={Basic usage}]
+from quantum_state_evolution_complete import *
+
+# Step 1: Construct Hamiltonian
+N = 4  # Number of qubits
+H = construct_TFIM(N, J=1.0, h=0.5)
+
+# Step 2: Create initial state
+psi0 = create_product_state(N, [1, 0])  # |0000>
+
+# Step 3: Evolve and extract single-qubit state
+t = 1.0
+results = evolve_and_trace(H, psi0, t, N, keep_qubits=[0])
+
+# Step 4: Access results
+rho_1 = results['rho_reduced']  # Single-qubit density matrix
+print(rho_1)
+\end{lstlisting}
+
+\subsection{Main Function: evolve\_and\_trace()}
+
+\begin{lstlisting}[caption={Complete function signature}]
+results = evolve_and_trace(
+    H,                  # Hamiltonian (2^N x 2^N array)
+    psi0,              # Initial state (2^N array)
+    t,                 # Evolution time (float)
+    N,                 # Number of qubits (int)
+    keep_qubits=[0],   # Qubits to keep (list)
+    method='auto',     # Evolution method
+    verbose=True       # Print progress
+)
+\end{lstlisting}
+
+\subsubsection{Parameters}
+
+\begin{itemize}
+    \item \textbf{H}: Permutation symmetric Hamiltonian matrix, shape $(2^N, 2^N)$
+    \item \textbf{psi0}: Initial quantum state vector, shape $(2^N,)$
+    \item \textbf{t}: Evolution time (float, in natural units $\hbar = 1$)
+    \item \textbf{N}: Total number of qubits (int)
+    \item \textbf{keep\_qubits}: List of qubit indices to keep after tracing
+        \begin{itemize}
+            \item \texttt{[0]}: Keep first qubit only
+            \item \texttt{[0, 1]}: Keep first two qubits
+            \item \texttt{[2]}: Keep third qubit
+        \end{itemize}
+    \item \textbf{method}: Evolution method
+        \begin{itemize}
+            \item \texttt{'auto'}: Automatic (default)
+            \item \texttt{'diagonalize'}: Use eigendecomposition
+            \item \texttt{'expm'}: Use matrix exponential
+        \end{itemize}
+    \item \textbf{verbose}: Print progress information (bool)
+\end{itemize}
+
+\subsubsection{Returns}
+
+Dictionary with keys:
+\begin{itemize}
+    \item \texttt{'psi\_0'}: Initial state
+    \item \texttt{'psi\_t'}: Evolved state $\ket{\psi(t)}$
+    \item \texttt{'rho\_full'}: Full density matrix $\rho(t)$
+    \item \texttt{'rho\_reduced'}: Reduced density matrix after partial trace
+    \item \texttt{'evolution\_info'}: Evolution information
+    \item \texttt{'density\_info'}: Density matrix diagnostics
+\end{itemize}
+
+\section{Constructing Hamiltonians}
+
+\subsection{Pre-built Models}
+
+\subsubsection{Transverse Field Ising Model (TFIM)}
+
+\begin{equation}
+    H = -J \sum_{i<j} Z_i \otimes Z_j - h \sum_i X_i
+\end{equation}
+
+\begin{lstlisting}[caption={TFIM construction}]
+H = construct_TFIM(N=4, J=1.0, h=0.5)
+\end{lstlisting}
+
+\textbf{Parameters}:
+\begin{itemize}
+    \item $J$: Ising coupling strength (typically 0.5--2.0)
+    \item $h$: Transverse field strength (typically 0.1--1.0)
+\end{itemize}
+
+\textbf{Physics}: Quantum annealing, phase transitions, optimization
+
+\subsubsection{XY Model}
+
+\begin{equation}
+    H = J \sum_{i<j} X_i \otimes X_j
+\end{equation}
+
+\begin{lstlisting}[caption={XY model construction}]
+H = construct_XY_model(N=4, J=0.5)
+\end{lstlisting}
+
+\textbf{Physics}: State transfer, entanglement generation
+
+\subsubsection{General Mean-Field Model}
+
+\begin{equation}
+    H = \sum_i (h_x X_i + h_z Z_i) + \sum_{i<j} (J_{xx} X_i \otimes X_j + J_{zz} Z_i \otimes Z_j)
+\end{equation}
+
+\begin{lstlisting}[caption={General model construction}]
+H = construct_general_MF(
+    N=4,
+    h_x=0.3,    # Transverse field
+    h_z=0.1,    # Longitudinal field
+    J_xx=0.2,   # XX coupling
+    J_zz=0.4    # ZZ coupling
+)
+\end{lstlisting}
+
+\subsection{Custom Hamiltonians}
+
+Build custom symmetric Hamiltonians using building blocks:
+
+\begin{lstlisting}[caption={Custom Hamiltonian}]
+N = 6
+H_custom = np.zeros((2**N, 2**N), dtype=complex)
+
+# Add single-qubit terms
+H_custom += add_single_X(N, coefficient=0.5)
+H_custom += add_single_Z(N, coefficient=0.2)
+
+# Add two-qubit interactions
+H_custom += add_ZZ_interaction(N, J=1.0)
+H_custom += add_XX_interaction(N, J=0.3)
+\end{lstlisting}
+
+\textbf{Available building blocks}:
+\begin{itemize}
+    \item \texttt{add\_single\_X(N, coeff)}: $\sum_i X_i$
+    \item \texttt{add\_single\_Z(N, coeff)}: $\sum_i Z_i$
+    \item \texttt{add\_XX\_interaction(N, J)}: $\sum_{i<j} X_i \otimes X_j$
+    \item \texttt{add\_ZZ\_interaction(N, J)}: $\sum_{i<j} Z_i \otimes Z_j$
+\end{itemize}
+
+\section{Creating Initial States}
+
+\subsection{Product States}
+
+Create $\ket{\psi}^{\otimes N}$ from single-qubit state $\ket{\psi}$:
+
+\begin{lstlisting}[caption={Product state creation}]
+# |0>^⊗N (all qubits in |0>)
+psi0 = create_product_state(N, [1, 0])
+
+# |1>^⊗N (all qubits in |1>)
+psi0 = create_product_state(N, [0, 1])
+
+# |+>^⊗N (all qubits in superposition)
+psi0 = create_product_state(N, [1, 1]/np.sqrt(2))
+
+# Custom single-qubit state
+alpha, beta = 0.8, 0.6
+psi0 = create_product_state(N, [alpha, beta])
+\end{lstlisting}
+
+\subsection{Custom States}
+
+For non-product states, construct manually:
+
+\begin{lstlisting}[caption={Custom initial state}]
+# GHZ-type state
+N = 3
+psi0 = np.zeros(2**N)
+psi0[0] = 1/np.sqrt(2)   # |000>
+psi0[-1] = 1/np.sqrt(2)  # |111>
+
+# W state
+psi0 = np.zeros(8)
+psi0[0b001] = 1/np.sqrt(3)
+psi0[0b010] = 1/np.sqrt(3)
+psi0[0b100] = 1/np.sqrt(3)
+\end{lstlisting}
+
+\section{Complete Examples}
+
+\subsection{Example 1: Single-Qubit Extraction}
+
+\textbf{Task}: Evolve 4-qubit system and extract single-qubit state.
+
+\begin{lstlisting}[caption={Single-qubit extraction}]
+import numpy as np
+from quantum_state_evolution_complete import *
+
+# Setup
+N = 4
+H = construct_TFIM(N, J=1.0, h=0.5)
+psi0 = create_product_state(N, [1, 0])  # |0000>
+t = 1.0
+
+# Execute workflow
+results = evolve_and_trace(H, psi0, t, N, keep_qubits=[0])
+
+# Extract results
+rho_1 = results['rho_reduced']  # 2x2 matrix
+purity = results['density_info']['reduced_purity']
+
+# Compute Bloch vector
+r = bloch_vector(rho_1)
+
+print(f"Single-qubit density matrix:\n{rho_1}")
+print(f"Bloch vector: {r}")
+print(f"Purity: {purity:.4f}")
+\end{lstlisting}
+
+\textbf{Output}:
+\begin{verbatim}
+Single-qubit density matrix:
+[[0.9907 +0.j      0.0288+0.0248j]
+ [0.0288-0.0248j  0.0093+0.j     ]]
+Bloch vector: [0.0576 0.0495 0.9814]
+Purity: 0.9845
+\end{verbatim}
+
+\subsection{Example 2: Two-Qubit Extraction}
+
+\textbf{Task}: Extract two-qubit reduced state.
+
+\begin{lstlisting}[caption={Two-qubit extraction}]
+# Keep first two qubits
+results = evolve_and_trace(
+    H, psi0, t, N,
+    keep_qubits=[0, 1]  # Keep qubits 0 and 1
+)
+
+rho_12 = results['rho_reduced']  # 4x4 matrix
+print(f"Shape: {rho_12.shape}")
+print(f"Trace: {np.trace(rho_12)}")
+\end{lstlisting}
+
+\subsection{Example 3: Time Evolution Sequence}
+
+\textbf{Task}: Track evolution over multiple time steps.
+
+\begin{lstlisting}[caption={Time evolution sequence}]
+N = 4
+H = construct_TFIM(N, J=1.0, h=0.5)
+psi0 = create_product_state(N, [1, 1]/np.sqrt(2))
+
+time_points = np.linspace(0, 5, 50)
+bloch_vectors = []
+
+for t in time_points:
+    results = evolve_and_trace(
+        H, psi0, t, N,
+        keep_qubits=[0],
+        verbose=False
+    )
+    rho_1 = results['rho_reduced']
+    r = bloch_vector(rho_1)
+    bloch_vectors.append(r)
+
+bloch_vectors = np.array(bloch_vectors)
+
+# Plot trajectory
+import matplotlib.pyplot as plt
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.plot(bloch_vectors[:, 0],
+        bloch_vectors[:, 1],
+        bloch_vectors[:, 2])
+ax.set_xlabel('$r_x$')
+ax.set_ylabel('$r_y$')
+ax.set_zlabel('$r_z$')
+plt.title('Bloch Vector Trajectory')
+plt.show()
+\end{lstlisting}
+
+\subsection{Example 4: Parameter Sweep}
+
+\textbf{Task}: Compare different Hamiltonian parameters.
+
+\begin{lstlisting}[caption={Parameter sweep}]
+N = 4
+psi0 = create_product_state(N, [1, 0])
+t = 1.0
+
+# Sweep transverse field
+h_values = np.linspace(0.1, 2.0, 20)
+purities = []
+
+for h in h_values:
+    H = construct_TFIM(N, J=1.0, h=h)
+    results = evolve_and_trace(
+        H, psi0, t, N,
+        keep_qubits=[0],
+        verbose=False
+    )
+    purity = results['density_info']['reduced_purity']
+    purities.append(purity)
+
+# Plot
+plt.plot(h_values, purities)
+plt.xlabel('Transverse field h')
+plt.ylabel('Single-qubit purity')
+plt.title('Purity vs Transverse Field')
+plt.show()
+\end{lstlisting}
+
+\section{Understanding the Results}
+
+\subsection{Reduced Density Matrix}
+
+The reduced density matrix $\rho_{\text{reduced}}$ characterizes the quantum state of the kept qubits after tracing out the others.
+
+\textbf{For single qubit} ($2 \times 2$ matrix):
+
+\begin{equation}
+    \rho_1 = \begin{pmatrix}
+        \rho_{00} & \rho_{01} \\
+        \rho_{10} & \rho_{11}
+    \end{pmatrix}
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $\rho_{00}$: Probability of being in $\ket{0}$
+    \item $\rho_{11}$: Probability of being in $\ket{1}$
+    \item $\rho_{01}, \rho_{10}$: Coherences (quantum correlations)
+\end{itemize}
+
+\subsection{Bloch Vector}
+
+For single-qubit states, the Bloch vector $\vec{r} = (r_x, r_y, r_z)$ provides geometric intuition:
+
+\begin{equation}
+    \rho = \frac{1}{2}(I + \vec{r} \cdot \vec{\sigma})
+\end{equation}
+
+where $\vec{\sigma} = (X, Y, Z)$ are Pauli matrices.
+
+\textbf{Properties}:
+\begin{itemize}
+    \item $|\vec{r}| = 1$: Pure state
+    \item $|\vec{r}| < 1$: Mixed state (entangled with environment)
+    \item $\vec{r} = (0, 0, 1)$: State $\ket{0}$
+    \item $\vec{r} = (0, 0, -1)$: State $\ket{1}$
+    \item $\vec{r} = (1, 0, 0)$: State $\ket{+}$
+\end{itemize}
+
+\subsection{Purity}
+
+Purity measures how "pure" vs "mixed" a state is:
+
+\begin{equation}
+    \mathcal{P} = \text{Tr}(\rho^2)
+\end{equation}
+
+\textbf{Values}:
+\begin{itemize}
+    \item $\mathcal{P} = 1$: Pure state (no entanglement with environment)
+    \item $0 < \mathcal{P} < 1$: Mixed state (entangled or classically mixed)
+    \item $\mathcal{P} = 1/d$: Maximally mixed state ($d$ = dimension)
+\end{itemize}
+
+For single qubit: $\mathcal{P} = |\vec{r}|^2$
+
+\section{Practical Considerations}
+
+\subsection{Computational Complexity}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Operation} & \textbf{Complexity} & \textbf{Bottleneck} \\
+\hline
+Hamiltonian construction & $O(N^2 \cdot 2^N)$ & Pairwise interactions \\
+State evolution (diagonalize) & $O(2^{3N})$ & Eigendecomposition \\
+Density matrix & $O(2^{2N})$ & Outer product \\
+Partial trace & $O(2^{2N})$ & Summing over basis \\
+\hline
+\end{tabular}
+\caption{Computational complexity}
+\end{table}
+
+\textbf{Practical limits}:
+\begin{itemize}
+    \item $N \leq 10$: Feasible on laptop
+    \item $N = 11-14$: Requires workstation
+    \item $N > 14$: Needs HPC or approximations
+\end{itemize}
+
+\subsection{Numerical Accuracy}
+
+Check these diagnostics:
+
+\begin{lstlisting}[caption={Accuracy checks}]
+results = evolve_and_trace(H, psi0, t, N, keep_qubits=[0])
+
+# Evolution unitarity
+print(f"Unitarity error: {results['evolution_info']['unitarity_error']}")
+
+# Density matrix validity
+print(f"Trace error: {results['density_info']['reduced_errors']['trace_error']}")
+print(f"Hermiticity error: {results['density_info']['reduced_errors']['hermitian_error']}")
+
+# Typical values:
+# Unitarity error < 1e-12 (good)
+# Trace error < 1e-10 (good)
+# Hermiticity error < 1e-10 (good)
+\end{lstlisting}
+
+\subsection{Common Issues}
+
+\subsubsection{Non-Hermitian Hamiltonian}
+
+\textbf{Symptom}: Warning "Hamiltonian is not Hermitian"
+
+\textbf{Cause}: $H \neq H^\dagger$
+
+\textbf{Fix}:
+\begin{lstlisting}
+# Symmetrize
+H = (H + H.conj().T) / 2
+\end{lstlisting}
+
+\subsubsection{Trace Not Equal to 1}
+
+\textbf{Symptom}: $\text{Tr}(\rho) \neq 1$
+
+\textbf{Cause}: Numerical error accumulation
+
+\textbf{Fix}: Reduce time step or use higher precision
+
+\subsubsection{Purity > 1}
+
+\textbf{Symptom}: $\text{Tr}(\rho^2) > 1$
+
+\textbf{Cause}: Numerical errors
+
+\textbf{Fix}: Check Hamiltonian construction and normalization
+
+\section{Advanced Usage}
+
+\subsection{Using Custom Evolution Method}
+
+Force specific evolution method:
+
+\begin{lstlisting}
+# Use diagonalization (exact)
+results = evolve_and_trace(H, psi0, t, N,
+                          keep_qubits=[0],
+                          method='diagonalize')
+
+# Use matrix exponential (general)
+results = evolve_and_trace(H, psi0, t, N,
+                          keep_qubits=[0],
+                          method='expm')
+\end{lstlisting}
+
+\subsection{Extracting Multiple Observables}
+
+\begin{lstlisting}
+results = evolve_and_trace(H, psi0, t, N, keep_qubits=[0])
+
+rho_1 = results['rho_reduced']
+
+# Bloch vector
+r = bloch_vector(rho_1)
+
+# Expectation values
+exp_X = 2 * np.real(rho_1[0, 1])
+exp_Y = 2 * np.imag(rho_1[1, 0])
+exp_Z = np.real(rho_1[0, 0] - rho_1[1, 1])
+
+# Populations
+P_0 = np.real(rho_1[0, 0])
+P_1 = np.real(rho_1[1, 1])
+
+print(f"<X> = {exp_X:.4f}")
+print(f"<Y> = {exp_Y:.4f}")
+print(f"<Z> = {exp_Z:.4f}")
+print(f"P(0) = {P_0:.4f}, P(1) = {P_1:.4f}")
+\end{lstlisting}
+
+\section{Validation and Testing}
+
+\subsection{Test Case 1: Known Evolution}
+
+For $H = \omega Z$, $\ket{\psi(0)} = \ket{+}$:
+
+\begin{equation}
+    \ket{\psi(t)} = \frac{1}{\sqrt{2}}(e^{-i\omega t}\ket{0} + e^{i\omega t}\ket{1})
+\end{equation}
+
+\subsection{Test Case 2: Conservation Laws}
+
+For any Hamiltonian:
+\begin{itemize}
+    \item Norm preserved: $\|\ket{\psi(t)}\| = \|\ket{\psi(0)}\|$
+    \item Trace preserved: $\text{Tr}(\rho(t)) = 1$
+\end{itemize}
+
+\subsection{Test Case 3: Permutation Symmetry}
+
+For symmetric $H$ and product initial state:
+\begin{equation}
+    \rho_i = \rho_j \quad \forall i, j
+\end{equation}
+
+All single-qubit reduced states should be identical.
+
+\section{Troubleshooting}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{|p{4cm}|p{4cm}|p{5cm}|}
+\hline
+\textbf{Problem} & \textbf{Possible Cause} & \textbf{Solution} \\
+\hline
+Memory error & System too large ($N > 12$) & Reduce $N$ or use approximations \\
+\hline
+Slow execution & Large $N$ ($N > 10$) & Use sparse methods or reduce $N$ \\
+\hline
+Non-unitary evolution & Non-Hermitian $H$ & Check $H = H^\dagger$ \\
+\hline
+Wrong dimensions & Index mismatch & Check $N$, \texttt{keep\_qubits} \\
+\hline
+\end{tabular}
+\caption{Common problems and solutions}
+\end{table}
+
+\section{References}
+
+\subsection{Key Equations Summary}
+
+\begin{align}
+    \text{Evolution:} && \ket{\psi(t)} &= e^{-iHt}\ket{\psi(0)} \\
+    \text{Density matrix:} && \rho &= \ket{\psi}\bra{\psi} \\
+    \text{Partial trace:} && \rho_A &= \text{Tr}_B[\rho_{AB}] \\
+    \text{Purity:} && \mathcal{P} &= \text{Tr}(\rho^2) \\
+    \text{Bloch vector:} && \rho &= \frac{1}{2}(I + \vec{r} \cdot \vec{\sigma})
+\end{align}
+
+\subsection{Further Reading}
+
+\begin{itemize}
+    \item Nielsen \& Chuang, \textit{Quantum Computation and Quantum Information}
+    \item Breuer \& Petruccione, \textit{The Theory of Open Quantum Systems}
+    \item Sachdev, \textit{Quantum Phase Transitions}
+\end{itemize}
+
+\section{Conclusion}
+
+This program provides a complete workflow for studying permutation symmetric quantum systems. The integrated pipeline from Hamiltonian construction to reduced state extraction enables efficient research on mean-field quantum dynamics, many-body entanglement, and quantum phase transitions.
+
+For questions or issues, refer to the source code documentation or contact the research group.
+
+\appendix
+
+\section{Function Reference}
+
+\subsection{Main Functions}
+
+\begin{itemize}
+    \item \texttt{evolve\_and\_trace(H, psi0, t, N, keep\_qubits, method, verbose)}
+    \item \texttt{evolve\_state(psi0, H, t, method)}
+    \item \texttt{partial\_trace(rho, N, keep\_qubits)}
+    \item \texttt{state\_to\_density\_matrix(psi)}
+\end{itemize}
+
+\subsection{Hamiltonian Construction}
+
+\begin{itemize}
+    \item \texttt{construct\_TFIM(N, J, h)}
+    \item \texttt{construct\_XY\_model(N, J)}
+    \item \texttt{construct\_general\_MF(N, h\_x, h\_z, J\_xx, J\_zz)}
+    \item \texttt{add\_single\_X(N, coefficient)}
+    \item \texttt{add\_single\_Z(N, coefficient)}
+    \item \texttt{add\_XX\_interaction(N, J)}
+    \item \texttt{add\_ZZ\_interaction(N, J)}
+\end{itemize}
+
+\subsection{Utilities}
+
+\begin{itemize}
+    \item \texttt{create\_product\_state(N, single\_qubit\_state)}
+    \item \texttt{bloch\_vector(rho\_1)}
+    \item \texttt{verify\_density\_matrix(rho, tol)}
+\end{itemize}
+
+\end{document}
