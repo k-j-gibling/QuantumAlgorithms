@@ -10,7 +10,6 @@ This module provides a complete workflow for:
 
 For research on mean-field quantum systems with N identical qubits.
 
-Author: Claude
 Date: October 31, 2025
 """
 
