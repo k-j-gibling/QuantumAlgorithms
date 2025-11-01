@@ -176,4 +176,10 @@ for elmt in H_eff_info_list:
 	matrices.append(currentMatrix)
 
 
+H_effective = matrices[0]
+
+for i in range(1,len(matrices)):
+	H_effective += matrices[i]
+
+
 
