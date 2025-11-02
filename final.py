@@ -284,20 +284,25 @@ def compute_effective_hamiltonian(H_list, stateVector):
 
 
 		for product_term in product_terms:
-			if product_term == 'X':
-				expectationValue = expectation_value(X, stateVector)
-				product_chain = product_chain*expectationValue
+			#if product_term == 'X':
+			#	expectationValue = expectation_value(X, stateVector)
+			#	product_chain = product_chain*expectationValue
+			expectationValue = expectation_value(pauli_dict[product_term], stateVector)
+			product_chain = product_chain*expectationValue
+
 
 		currentMatrix = None
 
-		if operator == 'X':
+		currentMatrix = pauli_dict[operator]
+
+		"""if operator == 'X':
 			currentMatrix = X
 		elif currentMatrix == 'Y':
 			currentMatrix = Y
 		elif currentMatrix == 'I':
 			currentMatrix = I
 		else:
-			currentMatrix = Z
+			currentMatrix = Z"""
 
 		currentMatrix = currentMatrix*operator_coeff*product_chain
 		matrices.append(currentMatrix)
