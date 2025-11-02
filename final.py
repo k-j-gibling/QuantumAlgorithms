@@ -29,6 +29,12 @@ X = np.array([[0, 1], [1, 0]], dtype=complex)
 Y = np.array([[0, -1j], [1j, 0]], dtype=complex)
 Z = np.array([[1, 0], [0, -1]], dtype=complex)
 
+pauli_dict = dict()
+pauli_dict['I'] = I
+pauli_dict['X'] = X
+pauli_dict['Y'] = Y
+pauli_dict['Z'] = Z
+
 
 
 """
@@ -61,6 +67,7 @@ def runge_kutta_4(psi0, H, t, dt=0.001):
     psi : numpy.ndarray
         Evolved state vector at time t
     """
+    print(H.shape)
     
     # Ensure inputs are numpy arrays with complex dtype
     psi = np.array(psi0, dtype=complex)
@@ -287,6 +294,8 @@ def compute_effective_hamiltonian(H_list, stateVector):
 			currentMatrix = X
 		elif currentMatrix == 'Y':
 			currentMatrix = Y
+		elif currentMatrix == 'I':
+			currentMatrix = I
 		else:
 			currentMatrix = Z
 
@@ -294,6 +303,7 @@ def compute_effective_hamiltonian(H_list, stateVector):
 		matrices.append(currentMatrix)
 
 
+	print(matrices)
 	H_effective = matrices[0]
 
 	for i in range(1,len(matrices)):
@@ -305,7 +315,7 @@ def compute_effective_hamiltonian(H_list, stateVector):
 
 
 
-def create_N_copy_state(N, single_qubit_state):
+def create_N_copy_state(single_qubit_state, N):
 	productVector = single_qubit_state
 
 	for i in range(N-1):
@@ -364,6 +374,40 @@ def state_to_density_matrix(psi):
 
 
 
+def insert_bit(index, position, bit_value, total_bits):
+    """
+    Insert a bit at a specific position in binary representation.
+    
+    Parameters:
+    -----------
+    index : int
+        Original index (without the bit)
+    position : int
+        Position to insert (0 = rightmost)
+    bit_value : int
+        Value of bit to insert (0 or 1)
+    total_bits : int
+        Total number of bits after insertion
+    
+    Returns:
+    --------
+    new_index : int
+        Index with bit inserted
+    
+    Example:
+    --------
+    >>> insert_bit(0b101, 1, 0, 4)  # Insert 0 at position 1
+    0b1001  # = 9
+    """
+    # Split index into parts before and after insertion point
+    lower_mask = (1 << position) - 1
+    lower_bits = index & lower_mask
+    upper_bits = (index >> position) << (position + 1)
+    
+    # Insert the bit
+    new_index = upper_bits | (bit_value << position) | lower_bits
+    
+    return new_index
 
 
 # ============================================================================
@@ -438,8 +482,6 @@ def partial_trace(rho, N, keep_qubits):
 
 
 
-
-
 def _is_diagonal(H, tol=1e-10):
     """Check if matrix H is diagonal within tolerance."""
     # Get off-diagonal elements
@@ -447,7 +489,7 @@ def _is_diagonal(H, tol=1e-10):
     return np.allclose(off_diag, 0, atol=tol)
 
 #Function that determines whether or not a given matrix is diagonalizable.
-def _is_diagonalizable(H):
+#def _is_diagonalizable(H):
 
 
 
@@ -555,7 +597,7 @@ def check_hermiticity(H, tol=1e-10):
 
 
 def H_list_to_H(H_list):
-	H = 0
+	H_ = 0
 	for element in H_LIST:
 		tensor_product = pauli_dict[element[0]]
 
@@ -563,9 +605,9 @@ def H_list_to_H(H_list):
 			current_matrix = pauli_dict[element[i]]
 			tensor_product = np.kron(tensor_product,current_matrix)
 
-		H += tensor_product
+		H_ += tensor_product
 
-	return H
+	return H_
 
 
 
@@ -577,20 +619,32 @@ Main Workflow
 ==================
 """
 
+psi_0 = np.array([1,1])/np.sqrt(2)
 
+N = 3
+
+H_LIST = [['X','I','X'], ['X','Z', 'I'], ['Z','X','Z']] #Acts on a 3 qubit system (N=3).
+
+H_eff = compute_effective_hamiltonian(H_LIST,psi_0)
+
+H = H_list_to_H(H_LIST)
 
 #Input state.
-psi_0 = 
+#psi_0 = 
 phi_0 = psi_0 #This is reserved as the single copy state that will evolve via the non-linear Schrodinger equation.
 
 
-psi_0_N = 
+psi_0_N = create_N_copy_state(psi_0, N)
+
+
 
 #Define the hamiltonian. Start from H_list, then build H_matrix, and H_eff
-H_list = []
-H = H_list_to_H(H_list)
+#H_list = []
+H = H_list_to_H(H_LIST)
 H_eff = 0
 t = 1
+
+H_eff = compute_effective_hamiltonian(H_LIST, psi_0)
 
 #For the time being we will only deal with Hamiltonians that are either
 #diagonal or diagonalizable.
@@ -603,7 +657,7 @@ psi_t_N = _evolve_via_diagonal_or_diagonalizable(psi_0_N, H, t, diagonal)
 psi_t_N_rho = state_to_density_matrix(psi_t_N)
 
 #Take the partial trace of this N-body system.
-rho_1 = partial_trace(psi_t_N_rho, N=2**N, keep_qubits=[0])
+rho_1 = partial_trace(psi_t_N_rho, N=N, keep_qubits=[0])
 
 
 
