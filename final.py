@@ -21,6 +21,7 @@ import numpy as np
 from scipy.linalg import eig, expm
 from itertools import combinations
 import warnings
+from sympy import Matrix #Used for testing if a matrix is diagonal.
 
 
 # Pauli matrices
@@ -541,8 +542,8 @@ def _evolve_via_diagonalization(psi0, H, t):
     # |ψ(t)⟩ = U @ diag(e^{-iλt}) @ U† @ |ψ(0)⟩
     psi_t = U @ (exp_diag * (U.conj().T @ psi0))
     
-    return psi_t, eigenvalues
-
+    #return psi_t, eigenvalues
+    return psi_t
 
 def _evolve_via_expm(psi0, H, t):
     """
@@ -572,6 +573,34 @@ def _evolve_via_diagonal_or_diagonalizable(psi0,H, t, diagonal):
 	#TODO: Elif check if diagonalizable.
 
 	#TODO: Else if neither diagonal nor diagonalizable then raise an error.
+
+
+def matrix_is_diagonal(H):
+	M = Matrix(H)
+
+	return M.is_diagonal()
+
+def matrix_is_diagonalizable(H):
+	M = Matrix(H)
+
+	return M.is_diagonalizable()
+
+
+def _evolve(psi0, H, t):
+	"""
+		First check if H is diagonal. If diagonal then evolve via diagonalization.
+		Else check if H is diagonalizable. If diagonalizable then evolve via diagonal.
+		Else evolve via exponentiation.
+	"""
+
+	if matrix_is_diagonal(H):
+		return _evolve_diagonal(psi0, H, t)
+	elif matrix_is_diagonalizable(H):
+		return _evolve_via_diagonalization(psi0, H, t)
+
+
+	return _evolve_via_expm(psi0, H, t)
+
 
 
 def check_hermiticity(H, tol=1e-10):

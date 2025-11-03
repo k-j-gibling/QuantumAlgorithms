@@ -3,11 +3,14 @@ Experiment 1
 
 """
 
+from final import H_list_to_H, compute_effective_hamiltonian, create_N_copy_state, _evolve, state_to_density_matrix, partial_trace, runge_kutta_4
 from specificHamiltonians import prepare_H_test1
+import numpy as np
 
 
-N_list = [3,5,7,10,15] #Experiment with various N.
-T_list = []	#Experiment with evolving for various times t in T_list
+#N_list = [3,5,7,10,15] #Experiment with various N.
+N_list = [3]
+T_list = [1]	#Experiment with evolving for various times t in T_list
 
 """
 	results_dict():
@@ -49,7 +52,7 @@ for N in N_list:
 	psi_0_N = create_N_copy_state(psi_0, N)
 
 	for t in T_list:
-		psi_t_N = _evolve_hamiltonian(psi_0_N, H_N, t)
+		psi_t_N = _evolve(psi_0_N, H_N, t)
 
 
 		#Compute the density operator of this N-body system.
@@ -66,7 +69,15 @@ for N in N_list:
 
 		#Compute error metrics and store results.
 		#TODO.
-		
+		error_fro = np.linalg.norm(rho_1 - phi_t_rho, 'fro')     # Frobenius norm
+		error_2   = np.linalg.norm(rho_1 - phi_t_rho, 2)         # Spectral (2-) norm
+		error_inf = np.linalg.norm(rho_1 - phi_t_rho, np.inf)    # Max row sum
+
+		results_dict[(N, t)] = dict()
+		results_dict[(N, t)]['forbenius norm'] = error_fro
+		results_dict[(N, t)]['spectral 2 norm'] = error_2
+		results_dict[(N, t)]['mar row sum'] = error_inf
+
 
 
 
