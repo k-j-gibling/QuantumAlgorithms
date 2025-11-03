@@ -5,7 +5,7 @@ This module provides functions to evolve quantum states under a Hamiltonian
 by computing the matrix exponential e^{iHt}. It handles both general 
 diagonalizable Hamiltonians and already-diagonal Hamiltonians efficiently.
 
-Author: Claude
+
 Date: 2025
 """
 

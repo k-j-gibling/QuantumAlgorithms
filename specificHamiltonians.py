@@ -112,7 +112,7 @@ def prepare_H_test2(N):
 
 from final import H_list_to_H
 
-H_l = prepare_H_test1(5)
+H_l = prepare_H_test2(7)
 
 #Now from H_list we need to build the actual hamiltonian.
 H = H_list_to_H(H_l)
