@@ -22,6 +22,7 @@ from scipy.linalg import eig, expm
 from itertools import combinations
 import warnings
 from sympy import Matrix #Used for testing if a matrix is diagonal.
+from qiskit.quantum_info import partial_trace, DensityMatrix
 
 
 # Pauli matrices
@@ -418,6 +419,15 @@ def insert_bit(index, position, bit_value, total_bits):
 # ============================================================================
 # PART 4: PARTIAL TRACE (THE KEY OPERATION!)
 # ============================================================================
+
+"""
+def partial_trace(rho, N, keep_qubits):
+
+	return partial_trace(rho, keep_qubits)
+"""
+
+
+
 
 def partial_trace(rho, N, keep_qubits):
     """
