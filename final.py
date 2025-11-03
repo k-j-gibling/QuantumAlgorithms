@@ -308,7 +308,6 @@ def compute_effective_hamiltonian(H_list, stateVector):
 		matrices.append(currentMatrix)
 
 
-	print(matrices)
 	H_effective = matrices[0]
 
 	for i in range(1,len(matrices)):
