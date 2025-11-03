@@ -41,15 +41,15 @@ def prepare_H_test1(N):
 
 			for k in range(N):
 				if k == i:
-					current_term1.append(X)
-					current_term2.append(Z)
+					current_term1.append('X')
+					current_term2.append('Z')
 					continue
 				elif k==j:
-					current_term1.append(Z)
-					current_term2.append(X)
+					current_term1.append('Z')
+					current_term2.append('X')
 				else:
-					current_term1.append(I)
-					current_term2.append(I)
+					current_term1.append('I')
+					current_term2.append('I')
 
 			H_list.append(current_term1)
 			H_list.append(current_term2)
@@ -58,11 +58,11 @@ def prepare_H_test1(N):
 
 
 
-H_l = prepare_H_test1(3)
-
-#Now from H_list we need to build the actual hamiltonian.
 from final import H_list_to_H
 
+H_l = prepare_H_test1(5)
+
+#Now from H_list we need to build the actual hamiltonian.
 H = H_list_to_H(H_l)
 
 

@@ -602,7 +602,7 @@ def check_hermiticity(H, tol=1e-10):
 
 def H_list_to_H(H_list):
 	H_ = 0
-	for element in H_LIST:
+	for element in H_list:
 		tensor_product = pauli_dict[element[0]]
 
 		for i in range(1,len(element)):
