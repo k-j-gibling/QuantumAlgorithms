@@ -8,9 +8,9 @@ from specificHamiltonians import prepare_H_test1
 import numpy as np
 
 
-N_list = [3,5,7] #Experiment with various N.
+N_list = [2,5,8] #Experiment with various N.
 #N_list = [3]
-T_list = [0.1, 0.5, 1]	#Experiment with evolving for various times t in T_list
+T_list = [1]	#Experiment with evolving for various times t in T_list
 
 """
 	results_dict():
