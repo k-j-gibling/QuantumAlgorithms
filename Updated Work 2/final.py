@@ -25,6 +25,8 @@ from sympy import Matrix #Used for testing if a matrix is diagonal.
 from qiskit.quantum_info import partial_trace, DensityMatrix
 import qutip as qt
 from qutip import Qobj
+from qutip import tensor
+
 
 
 # Pauli matrices
@@ -324,36 +326,14 @@ def compute_effective_hamiltonian(H_list, stateVector):
 
 
 def create_N_copy_state(single_qubit_state, N):
-	productVector = single_qubit_state
+    productVector = single_qubit_state
+    for i in range(N-1):
+        productVector = np.kron(productVector, single_qubit_state)
 
-	for i in range(N-1):
-		productVector = np.kron(productVector, single_qubit_state)
+    psi_N = tensor([Qobj(single_qubit_state)] * N)
 
-	return productVector
-
-#def evolve_state(psi_0, H, t):
-	"""
-    Evolve quantum state: |ψ(t)⟩ = e^{-iHt} |ψ(0)⟩
-    
-    Parameters:
-    -----------
-    psi0 : array_like, shape (d,)
-        Initial state vector
-    H : array_like, shape (d, d)
-        Hamiltonian matrix
-    t : float
-        Evolution time
-    method : str, optional
-        'auto', 'diagonalize', or 'expm'
-    
-    Returns:
-    --------
-    psi_t : ndarray
-        Evolved state
-    """
-
-
-
+    #return psi_N.full()
+    return productVector
 '''
 ============================
 ============================

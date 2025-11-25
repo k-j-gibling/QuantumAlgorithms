@@ -6,6 +6,7 @@ Experiment 1
 from final import H_list_to_H, compute_effective_hamiltonian, create_N_copy_state, _evolve, state_to_density_matrix, partial_trace, runge_kutta_4
 from specificHamiltonians import prepare_H_test1
 import numpy as np
+from scipy.linalg import ishermitian
 
 from scipy.linalg import svdvals
 #from qutip import Qobj
@@ -20,7 +21,6 @@ def trace_norm_distance(A, B):
     """Compute trace norm distance ||A - B||_tr"""
     return trace_norm(A - B)
 
-from scipy.linalg import svdvals
 
 
 """def trace_norm_error(A, B):
@@ -31,7 +31,7 @@ from scipy.linalg import svdvals
 """
 
 
-N_list = [3,4,5,6,7,8] #Experiment with various N.
+N_list = [3,4,5,6,7,8,9] #Experiment with various N.
 #N_list = [3]
 T_list = [0.1]	#Experiment with evolving for various times t in T_list
 
@@ -73,14 +73,18 @@ for N in N_list:
 	#Get the corresponding Hamiltonian in matrix form.
 	H_N = (1/(N-1))*H_list_to_H(H_N_list)
 
+	print("Is hermitian:")
+	print(ishermitian(H_N))
+
 	#Get the corresponding effective Hamiltonian.
-	H_eff = compute_effective_hamiltonian(H_N_list, psi_0)
+	H_eff = (1/(N-1))*compute_effective_hamiltonian(H_N_list, psi_0)
 
 	#Create N copies of the initial state.
 	psi_0_N = create_N_copy_state(psi_0, N)
 
 	for t in T_list:
 		psi_t_N = _evolve(psi_0_N, H_N, t)
+		print("psi_t_N norm: "+str(np.linalg.norm(psi_t_N)))
 
 
 		#Compute the density operator of this N-body system.
@@ -90,7 +94,7 @@ for N in N_list:
 		rho_1 = partial_trace(psi_t_N_rho, N=N, keep_qubits=[0])
 
 		#Now, evolve phi_0 to get phi_t.
-		phi_t = runge_kutta_4(phi_0, H_eff, t, dt=0.00001)
+		phi_t = runge_kutta_4(phi_0, H_eff, t, dt=0.000001)
 
 		#Compute the corresponding density matrix of this state.
 		phi_t_rho = state_to_density_matrix(phi_t)
@@ -106,7 +110,7 @@ for N in N_list:
 		results_dict[(N, t)] = dict()
 		results_dict[(N, t)]['forbenius norm'] = error_fro
 		results_dict[(N, t)]['spectral 2 norm'] = error_2
-		results_dict[(N, t)]['mar row sum'] = error_inf
+		results_dict[(N, t)]['max row sum'] = error_inf
 
 		trNorm = trace_norm_distance(rho_1, phi_t_rho)
 
@@ -161,15 +165,19 @@ for N in N_list:
 
 	#Get the corresponding Hamiltonian in matrix form.
 	H_N = (1/(N-1))*H_list_to_H(H_N_list)
+	print("Is hermitian:")
+	print(ishermitian(H_N))
 
 	#Get the corresponding effective Hamiltonian.
-	H_eff = compute_effective_hamiltonian(H_N_list, psi_0)
+	H_eff = (1/(N-1))*compute_effective_hamiltonian(H_N_list, psi_0)
 
 	#Create N copies of the initial state.
 	psi_0_N = create_N_copy_state(psi_0, N)
 
 	for t in T_list:
 		psi_t_N = _evolve(psi_0_N, H_N, t)
+		print("psi_t_N norm: "+str(np.linalg.norm(psi_t_N)))
+
 
 
 		#Compute the density operator of this N-body system.
@@ -179,7 +187,7 @@ for N in N_list:
 		rho_1 = partial_trace(psi_t_N_rho, N=N, keep_qubits=[0])
 
 		#Now, evolve phi_0 to get phi_t.
-		phi_t = runge_kutta_4(phi_0, H_eff, t, dt=0.00001)
+		phi_t = runge_kutta_4(phi_0, H_eff, t, dt=0.000001)
 
 		#Compute the corresponding density matrix of this state.
 		phi_t_rho = state_to_density_matrix(phi_t)
@@ -193,7 +201,7 @@ for N in N_list:
 		results_dict[(N, t)] = dict()
 		results_dict[(N, t)]['forbenius norm'] = error_fro
 		results_dict[(N, t)]['spectral 2 norm'] = error_2
-		results_dict[(N, t)]['mar row sum'] = error_inf
+		results_dict[(N, t)]['max row sum'] = error_inf
 
 		trNorm = trace_norm_distance(rho_1, phi_t_rho)
 
