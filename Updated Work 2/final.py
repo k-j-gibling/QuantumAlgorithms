@@ -24,6 +24,7 @@ import warnings
 from sympy import Matrix #Used for testing if a matrix is diagonal.
 from qiskit.quantum_info import partial_trace, DensityMatrix
 import qutip as qt
+from qutip import Qobj
 
 
 # Pauli matrices
@@ -374,10 +375,13 @@ def state_to_density_matrix(psi):
     rho : ndarray, shape (d, d)
         Density matrix
     """
-    psi = np.asarray(psi, dtype=complex)
-    psi = psi / np.linalg.norm(psi)  # Normalize
-    rho = np.outer(psi, psi.conj())
-    return rho
+    #psi = np.asarray(psi, dtype=complex)
+    #psi = psi / np.linalg.norm(psi)  # Normalize
+    #rho = np.outer(psi, psi.conj())
+
+    psi_q = Qobj(psi)
+    rho = psi_q.proj()  # |psi><psi|
+    return rho.full()
 
 
 
@@ -460,7 +464,8 @@ def _evolve_via_diagonalization(psi0, H, t):
     """
     # Diagonalize H
     eigenvalues, U = eig(H)
-    
+    #eigenvalues = np.linalg.eigvals(H)
+
     # eigenvalues is the array of eigenvalues
     # U is the matrix of eigenvectors (columns)
     
@@ -474,7 +479,10 @@ def _evolve_via_diagonalization(psi0, H, t):
     
     # Method 1: Direct formula
     # |ψ(t)⟩ = U @ diag(e^{-iλt}) @ U† @ |ψ(0)⟩
-    psi_t = U @ (exp_diag * (U.conj().T @ psi0))
+    #psi_t = U @ (exp_diag * (U.conj().T @ psi0))
+    U_inv = np.linalg.inv(U)
+    psi_t = U @ (exp_diag * (U_inv @ psi0))
+
     
     #return psi_t, eigenvalues
     return psi_t
@@ -585,7 +593,7 @@ Main Workflow
 ==================
 ==================
 """
-
+"""
 psi_0 = np.array([1,1])/np.sqrt(2)
 
 N = 3
@@ -636,6 +644,7 @@ phi_t_rho = state_to_density_matrix(phi_t)
 
 #Compute error metrics between rho_1 and phi_t_rho.
 #TODO
+"""
 
 
 
