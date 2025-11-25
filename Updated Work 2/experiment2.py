@@ -31,7 +31,7 @@ def trace_norm_distance(A, B):
 """
 
 
-N_list = [3,4,5,6,7,8,9] #Experiment with various N.
+N_list = [3,4,5,6,7,8,9,10] #Experiment with various N.
 #N_list = [3]
 T_list = [0.1]	#Experiment with evolving for various times t in T_list
 
