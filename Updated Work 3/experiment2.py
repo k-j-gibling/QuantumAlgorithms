@@ -4,7 +4,8 @@ Experiment 1
 """
 
 from final import H_list_to_H, compute_effective_hamiltonian, create_N_copy_state, _evolve, state_to_density_matrix, partial_trace, runge_kutta_4
-from specificHamiltonians import prepare_H_test1
+#from specificHamiltonians import prepare_H_test1
+from specificHamiltonians_FIXED import prepare_H_test1
 import numpy as np
 from scipy.linalg import ishermitian
 
@@ -33,7 +34,7 @@ def trace_norm_distance(A, B):
 """
 
 
-N_list = [3,4,5,6,7,8,9,10,11] #Experiment with various N.
+N_list = [3,4,5,6,7,8,9,10] #Experiment with various N.
 #N_list = [3]
 T_list = [0.1]	#Experiment with evolving for various times t in T_list
 
@@ -125,7 +126,7 @@ for N in N_list:
 #======================================================
 
 
-from specificHamiltonians import prepare_H_test2, prepare_H_test3
+from specificHamiltonians_FIXED import prepare_H_test2, prepare_H_test3
 
 
 #N_list = [3,4,5,6,7,8,9] #Experiment with various N.
