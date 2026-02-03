@@ -36,9 +36,9 @@ def trace_norm_distance(A, B):
 """
 
 
-N_list = [3,4,5,6,7,8] #Experiment with various N.
+N_list = [3,4,5,6,7,8,9] #Experiment with various N.
 #N_list = [3]
-T_list = [0.1]	#Experiment with evolving for various times t in T_list
+T_list = [0.0001]	#Experiment with evolving for various times t in T_list
 
 """
 	results_dict():
@@ -172,7 +172,7 @@ for N in N_list:
 	#Get the corresponding Hamiltonian in matrix form.
 	#H_N = (1/((N-1)*(N-2)))*H_list_to_H(H_N_list)
 	H_N = (1/((N-1)*(N-2)))*H_list_to_H(H_N_list)
-	
+
 	print("Is hermitian:")
 	print(ishermitian(H_N))
 
@@ -273,10 +273,10 @@ plt.plot(system2_N, system2_errors, 's-', label='System 2',
          linewidth=2, markersize=8, color='red')
 
 # Add theoretical O(1/N) line for comparison (optional)
-N_theory = np.linspace(min(system1_N), max(system1_N), 100)
-error_theory = 0.5 / N_theory  # Adjust constant as needed
-plt.plot(N_theory, error_theory, '--', label='O(1/N) theoretical', 
-         linewidth=1.5, color='gray', alpha=0.7)
+#N_theory = np.linspace(min(system1_N), max(system1_N), 100)
+#error_theory = 0.5 / N_theory  # Adjust constant as needed
+#plt.plot(N_theory, error_theory, '--', label='O(1/N) theoretical', 
+#         linewidth=1.5, color='gray', alpha=0.7)
 
 # Formatting
 plt.xlabel('Number of Copies (N)', fontsize=14, fontweight='bold')
